@@ -9,6 +9,11 @@ App mobile em **React Native + Expo (managed workflow) + Expo Router**, feito a 
 
 ## Como rodar
 
+Crie um `.env` na raiz (baseado em `.env.example`) com a URL e a `anon key` de um
+projeto Supabase — veja `specs/002-auth-supabase/quickstart.md` para a configuração
+necessária no painel do Supabase (redirect URL da recuperação de senha, confirmação de
+e-mail desativada).
+
 ```bash
 npm install
 npx expo start
@@ -52,7 +57,7 @@ src/
 
 ## O que funciona
 
-- **Login e cadastro**: sem sessão, o app só mostra as telas de login e cadastro. Depois de entrar, as telas de entrada deixam de ser acessíveis. O login vem preenchido com uma conta de demonstração (`marina@consultorio.com` / `senha1234`). No cadastro, os campos são validados (e-mail, senha com no mínimo 8 caracteres, confirmação de senha e aceite dos termos), e CRP e celular são opcionais. Tocar no avatar da tela Início faz logout.
+- **Login, cadastro e recuperação de senha**: contas reais e persistentes no Supabase Auth (sem sessão, o app só mostra as telas de login/cadastro; depois de entrar, essas telas deixam de ser acessíveis, e a sessão persiste entre aberturas do app). No cadastro, os campos são validados (e-mail, senha com no mínimo 8 caracteres, confirmação de senha e aceite dos termos), e CRP e celular são opcionais (guardados como metadados da conta). "Esqueci minha senha" envia um link por e-mail que abre, dentro do próprio app, uma tela para definir a nova senha. Tocar no avatar da tela Início faz logout.
 - **Início**: próxima sessão, resumo do dia, lista de hoje e pendências. Também dá para confirmar a sessão de um paciente que ainda não respondeu.
 - **Agenda**: navegação por semana e dia. Tocar numa sessão abre o registro dela.
 - **Nova sessão**: escolha de paciente, data, horário, valor, modalidade e repetição semanal. A tela valida o formato do horário e avisa se já houver outra sessão marcada naquele horário.
@@ -62,7 +67,7 @@ src/
 
 ## Próximos passos sugeridos
 
-0. **Autenticação real**: `src/store/AuthStore.tsx` hoje simula login e cadastro só em memória e aceita qualquer senha. Ligue `entrar`, `cadastrar` e `sair` a um provedor real (Supabase Auth, Firebase Auth ou sua API). Guarde o token da sessão com `expo-secure-store` para manter a pessoa logada, e implemente a recuperação de senha de verdade.
+0. ~~**Autenticação real**~~ — feito: `src/store/AuthStore.tsx` usa o Supabase Auth de verdade (login, cadastro e recuperação de senha), com o token de sessão guardado via `expo-secure-store` (ver `specs/002-auth-supabase/`). Falta configurar o isolamento de dados por conta (cada psicóloga só acessar seus próprios pacientes/financeiro) quando a persistência do item 1 abaixo for implementada.
 1. **Persistência**: hoje o estado fica em memória (`src/store/AppStore.tsx`) e volta aos dados de exemplo ao reiniciar. Opções:
    - local: `expo-sqlite` (inclusive com Drizzle ORM)
    - nuvem: Supabase/Firebase ou uma API própria

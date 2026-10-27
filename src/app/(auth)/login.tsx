@@ -13,9 +13,8 @@ import { colors } from '@/theme';
 export default function Login() {
   const { entrar } = useAuth();
   const { showToast } = useApp();
-  // Pré-preenchido com a conta de demonstração para facilitar os testes.
-  const [email, setEmail] = useState('marina@consultorio.com');
-  const [senha, setSenha] = useState('senha1234');
+  const [email, setEmail] = useState('');
+  const [senha, setSenha] = useState('');
   const [tentou, setTentou] = useState(false);
   const [enviando, setEnviando] = useState(false);
 
@@ -77,7 +76,7 @@ export default function Login() {
         />
         <Pressable
           accessibilityRole="button"
-          onPress={() => showToast('Enviamos um link de redefinição para seu e-mail')}
+          onPress={() => router.push('/esqueci-senha')}
           style={{ alignSelf: 'flex-end', minHeight: 44, justifyContent: 'center' }}
         >
           <Txt size={14} weight="semibold" color={colors.primary}>

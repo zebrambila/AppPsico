@@ -21,6 +21,20 @@ import { colors } from '@/theme';
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
+  return (
+    <SafeAreaProvider>
+      <AuthProvider>
+        <AppProvider>
+          <AppShell />
+        </AppProvider>
+      </AuthProvider>
+    </SafeAreaProvider>
+  );
+}
+
+/** Só libera o splash e a navegação quando fontes e sessão persistida já resolveram. */
+function AppShell() {
+  const { carregando } = useAuth();
   const [loaded, error] = useFonts({
     PlusJakartaSans_400Regular,
     PlusJakartaSans_500Medium,
@@ -29,24 +43,20 @@ export default function RootLayout() {
     PlusJakartaSans_800ExtraBold,
   });
 
-  useEffect(() => {
-    if (loaded || error) SplashScreen.hideAsync();
-  }, [loaded, error]);
+  const pronto = (loaded || !!error) && !carregando;
 
-  if (!loaded && !error) return null;
+  useEffect(() => {
+    if (pronto) SplashScreen.hideAsync();
+  }, [pronto]);
+
+  if (!pronto) return null;
 
   return (
-    <SafeAreaProvider>
-      <AuthProvider>
-        <AppProvider>
-          <View style={{ flex: 1, backgroundColor: colors.bg }}>
-            <StatusBar style="dark" />
-            <RootNavigator />
-            <Toast />
-          </View>
-        </AppProvider>
-      </AuthProvider>
-    </SafeAreaProvider>
+    <View style={{ flex: 1, backgroundColor: colors.bg }}>
+      <StatusBar style="dark" />
+      <RootNavigator />
+      <Toast />
+    </View>
   );
 }
 
@@ -57,6 +67,9 @@ function RootNavigator() {
   return (
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
       <Stack.Screen name="index" />
+      {/* Fora de qualquer Stack.Protected: verifyOtp autentica temporariamente a usuária
+          antes de ela definir a nova senha, então o grupo guardado por !logado a esconderia. */}
+      <Stack.Screen name="redefinir-senha" />
       <Stack.Protected guard={!logado}>
         <Stack.Screen name="(auth)" />
       </Stack.Protected>
