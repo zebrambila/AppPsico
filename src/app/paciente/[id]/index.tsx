@@ -17,7 +17,8 @@ import {
   StatusChip,
   Txt,
 } from '@/components/ui';
-import { fmtLonga, moeda, plural } from '@/lib/format';
+import { confirmarAcao } from '@/lib/confirmar';
+import { fmtLonga, fmtTelefone, moeda, plural } from '@/lib/format';
 import { useApp } from '@/store/AppStore';
 import { emAbertoDoPaciente, ordenarPorDataDesc, soma } from '@/store/selectors';
 import { colors, radius } from '@/theme';
@@ -28,8 +29,12 @@ const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'o
 
 export default function PacienteDetalhe() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { paciente, sessoes, lancamentos, notas, hoje } = useApp();
+  const { paciente, sessoes, lancamentos, notas, hoje, excluirPaciente, excluirNota, removerLancamento, showToast } =
+    useApp();
   const [aba, setAba] = useState<Aba>('sessoes');
+  const [excluindo, setExcluindo] = useState(false);
+  const [excluindoNotaId, setExcluindoNotaId] = useState<string | null>(null);
+  const [excluindoLancamentoId, setExcluindoLancamentoId] = useState<string | null>(null);
   const p = paciente(id);
 
   if (!p) {
@@ -54,9 +59,86 @@ export default function PacienteDetalhe() {
   const saldo = soma(abertos);
   const [ano, mes] = p.desde.split('-').map(Number);
 
+  const excluir = () => {
+    confirmarAcao({
+      titulo: 'Excluir paciente',
+      mensagem: `Tem certeza que deseja excluir ${p.nome}? Todas as sessões, lançamentos e notas vinculados a esse paciente também serão excluídos. Essa ação não pode ser desfeita.`,
+      labelConfirmar: 'Excluir',
+      onConfirmar: async () => {
+        setExcluindo(true);
+        try {
+          await excluirPaciente(p.id);
+          showToast(`${p.nome} foi excluído`);
+          router.back();
+        } catch (e) {
+          showToast(e instanceof Error ? e.message : 'Não foi possível excluir o paciente.');
+        } finally {
+          setExcluindo(false);
+        }
+      },
+    });
+  };
+
+  const excluirNotaDoProntuario = (notaId: string) => {
+    confirmarAcao({
+      titulo: 'Excluir anotação',
+      mensagem: 'Tem certeza que deseja excluir esta anotação do prontuário? Essa ação não pode ser desfeita.',
+      labelConfirmar: 'Excluir',
+      onConfirmar: async () => {
+        setExcluindoNotaId(notaId);
+        try {
+          await excluirNota(notaId);
+          showToast('Anotação excluída');
+        } catch (e) {
+          showToast(e instanceof Error ? e.message : 'Não foi possível excluir a anotação.');
+        } finally {
+          setExcluindoNotaId(null);
+        }
+      },
+    });
+  };
+
+  const excluirLancamentoDoFinanceiro = (lancamentoId: string) => {
+    confirmarAcao({
+      titulo: 'Excluir lançamento',
+      mensagem: 'Tem certeza que deseja excluir este lançamento financeiro? Essa ação não pode ser desfeita.',
+      labelConfirmar: 'Excluir',
+      onConfirmar: async () => {
+        setExcluindoLancamentoId(lancamentoId);
+        try {
+          await removerLancamento(lancamentoId);
+          showToast('Lançamento excluído');
+        } catch (e) {
+          showToast(e instanceof Error ? e.message : 'Não foi possível excluir o lançamento.');
+        } finally {
+          setExcluindoLancamentoId(null);
+        }
+      },
+    });
+  };
+
   return (
     <Screen>
-      <BackButton />
+      <Row style={{ justifyContent: 'space-between' }}>
+        <BackButton />
+        <Row style={{ gap: 4 }}>
+          <Button
+            label="Editar"
+            variant="outline"
+            size="sm"
+            icon="edit-2"
+            onPress={() => router.push({ pathname: '/paciente/[id]/editar', params: { id: p.id } })}
+          />
+          <Button
+            label={excluindo ? 'Excluindo…' : 'Excluir'}
+            variant="outline"
+            size="sm"
+            icon="trash-2"
+            accessibilityLabel={`Excluir ${p.nome}`}
+            onPress={excluir}
+          />
+        </Row>
+      </Row>
 
       <Row style={{ gap: 14 }}>
         <Avatar iniciais={p.iniciais} size={64} dark />
@@ -75,7 +157,7 @@ export default function PacienteDetalhe() {
         <InfoRow label="Horário fixo" value={`${DIAS[p.diaFixo]} ${p.horaFixa}`} />
         <InfoRow label="Modalidade" value={p.modalidade} />
         <InfoRow label="Valor da sessão" value={moeda(p.valorSessao)} />
-        <InfoRow label="Contato" value={p.telefone} last />
+        <InfoRow label="Contato" value={fmtTelefone(p.telefone)} last />
       </Card>
 
       <Row style={{ gap: 10 }}>
@@ -135,9 +217,20 @@ export default function PacienteDetalhe() {
           ) : null}
           {notasPac.map((n) => (
             <Card key={n.id} style={{ gap: 6 }}>
-              <Txt size={12} weight="bold" color={colors.primary}>
-                {fmtLonga(n.data)}
-              </Txt>
+              <Row style={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <Txt size={12} weight="bold" color={colors.primary}>
+                  {fmtLonga(n.data)}
+                </Txt>
+                <Button
+                  label={excluindoNotaId === n.id ? 'Excluindo…' : 'Excluir'}
+                  variant="outline"
+                  size="sm"
+                  icon="trash-2"
+                  accessibilityLabel="Excluir anotação"
+                  onPress={() => excluirNotaDoProntuario(n.id)}
+                  style={{ opacity: excluindoNotaId === n.id ? 0.7 : 1 }}
+                />
+              </Row>
               <Txt size={14} style={{ lineHeight: 21 }}>
                 {n.texto}
               </Txt>
@@ -166,21 +259,32 @@ export default function PacienteDetalhe() {
             </Txt>
           </View>
           {pagamentos.map((l) => (
-            <Card key={l.id} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12 }}>
-              <View style={{ gap: 2 }}>
-                <Txt size={14} weight="semibold">
-                  {fmtLonga(l.data)}
-                </Txt>
-                <Txt size={12} color={colors.muted}>
-                  {l.pago ? l.metodo : 'Aguardando pagamento'}
-                </Txt>
-              </View>
-              <Row style={{ gap: 10 }}>
-                <Txt size={14} weight="bold">
-                  {moeda(l.valor)}
-                </Txt>
-                <Chip label={l.pago ? 'Pago' : 'Em aberto'} tone={l.pago ? 'success' : 'warn'} />
+            <Card key={l.id} style={{ gap: 6 }}>
+              <Row style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+                <View style={{ gap: 2 }}>
+                  <Txt size={14} weight="semibold">
+                    {fmtLonga(l.data)}
+                  </Txt>
+                  <Txt size={12} color={colors.muted}>
+                    {l.pago ? l.metodo : 'Aguardando pagamento'}
+                  </Txt>
+                </View>
+                <Row style={{ gap: 10 }}>
+                  <Txt size={14} weight="bold">
+                    {moeda(l.valor)}
+                  </Txt>
+                  <Chip label={l.pago ? 'Pago' : 'Em aberto'} tone={l.pago ? 'success' : 'warn'} />
+                </Row>
               </Row>
+              <Button
+                label={excluindoLancamentoId === l.id ? 'Excluindo…' : 'Excluir'}
+                variant="outline"
+                size="sm"
+                icon="trash-2"
+                accessibilityLabel="Excluir lançamento"
+                onPress={() => excluirLancamentoDoFinanceiro(l.id)}
+                style={{ alignSelf: 'flex-start', opacity: excluindoLancamentoId === l.id ? 0.7 : 1 }}
+              />
             </Card>
           ))}
         </View>

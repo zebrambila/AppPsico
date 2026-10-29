@@ -39,11 +39,20 @@ export default function NovaSessao() {
     }
   };
 
-  const agendar = () => {
-    if (!valido) return;
-    agendarSessao({ pacienteId, data, hora, modalidade, valor: valorNum, repetirSemanal: repetir });
-    showToast(`Sessão agendada · ${fmtDiaSemana(data)}, ${hora}`);
-    router.back();
+  const [enviando, setEnviando] = useState(false);
+
+  const agendar = async () => {
+    if (!valido || enviando) return;
+    setEnviando(true);
+    try {
+      await agendarSessao({ pacienteId, data, hora, modalidade, valor: valorNum, repetirSemanal: repetir });
+      showToast(`Sessão agendada · ${fmtDiaSemana(data)}, ${hora}`);
+      router.back();
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : 'Não foi possível agendar a sessão.');
+    } finally {
+      setEnviando(false);
+    }
   };
 
   return (
@@ -141,7 +150,11 @@ export default function NovaSessao() {
 
       <Row style={{ gap: 10 }}>
         <Button label="Cancelar" variant="outline" style={{ flex: 1 }} onPress={() => router.back()} />
-        <Button label="Agendar sessão" style={{ flex: 2, opacity: valido ? 1 : 0.5 }} onPress={agendar} />
+        <Button
+          label={enviando ? 'Agendando…' : 'Agendar sessão'}
+          style={{ flex: 2, opacity: valido && !enviando ? 1 : 0.5 }}
+          onPress={agendar}
+        />
       </Row>
     </ScrollView>
   );

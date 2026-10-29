@@ -9,13 +9,13 @@ import type { Lancamento, MetodoPagamento, Nota, Paciente, Sessao, StatusSessao 
 export const HOJE = '2026-10-15';
 
 export const pacientesIniciais: Paciente[] = [
-  { id: 'p1', nome: 'Ana Ribeiro', iniciais: 'AR', frequencia: 'Semanal', diaFixo: 4, horaFixa: '09:00', modalidade: 'Presencial', valorSessao: 200, desde: '2025-03-10', telefone: '(11) 90000-0001' },
-  { id: 'p2', nome: 'Bruno Carvalho', iniciais: 'BC', frequencia: 'Semanal', diaFixo: 4, horaFixa: '10:30', modalidade: 'Online', valorSessao: 180, desde: '2026-04-02', telefone: '(11) 90000-0002' },
-  { id: 'p3', nome: 'Camila Duarte', iniciais: 'CD', frequencia: 'Semanal', diaFixo: 4, horaFixa: '14:00', modalidade: 'Presencial', valorSessao: 200, desde: '2026-01-15', telefone: '(11) 90000-0003' },
-  { id: 'p4', nome: 'Diego Martins', iniciais: 'DM', frequencia: 'Semanal', diaFixo: 4, horaFixa: '16:00', modalidade: 'Presencial', valorSessao: 180, desde: '2026-08-06', telefone: '(11) 90000-0004' },
-  { id: 'p5', nome: 'Elisa Nogueira', iniciais: 'EN', frequencia: 'Semanal', diaFixo: 4, horaFixa: '18:30', modalidade: 'Online', valorSessao: 220, desde: '2024-11-07', telefone: '(11) 90000-0005' },
-  { id: 'p6', nome: 'Felipe Souza', iniciais: 'FS', frequencia: 'Quinzenal', diaFixo: 5, horaFixa: '11:00', modalidade: 'Presencial', valorSessao: 250, desde: '2026-06-12', telefone: '(11) 90000-0006' },
-  { id: 'p7', nome: 'Gabriela Lima', iniciais: 'GL', frequencia: 'Semanal', diaFixo: 5, horaFixa: '09:00', modalidade: 'Presencial', valorSessao: 200, desde: '2026-02-06', telefone: '(11) 90000-0007' },
+  { id: 'p1', nome: 'Ana Ribeiro', iniciais: 'AR', frequencia: 'Semanal', diaFixo: 4, horaFixa: '09:00', modalidade: 'Presencial', valorSessao: 200, desde: '2025-03-10', telefone: '(11) 90000-0001', excluido: false },
+  { id: 'p2', nome: 'Bruno Carvalho', iniciais: 'BC', frequencia: 'Semanal', diaFixo: 4, horaFixa: '10:30', modalidade: 'Online', valorSessao: 180, desde: '2026-04-02', telefone: '(11) 90000-0002', excluido: false },
+  { id: 'p3', nome: 'Camila Duarte', iniciais: 'CD', frequencia: 'Semanal', diaFixo: 4, horaFixa: '14:00', modalidade: 'Presencial', valorSessao: 200, desde: '2026-01-15', telefone: '(11) 90000-0003', excluido: false },
+  { id: 'p4', nome: 'Diego Martins', iniciais: 'DM', frequencia: 'Semanal', diaFixo: 4, horaFixa: '16:00', modalidade: 'Presencial', valorSessao: 180, desde: '2026-08-06', telefone: '(11) 90000-0004', excluido: false },
+  { id: 'p5', nome: 'Elisa Nogueira', iniciais: 'EN', frequencia: 'Semanal', diaFixo: 4, horaFixa: '18:30', modalidade: 'Online', valorSessao: 220, desde: '2024-11-07', telefone: '(11) 90000-0005', excluido: false },
+  { id: 'p6', nome: 'Felipe Souza', iniciais: 'FS', frequencia: 'Quinzenal', diaFixo: 5, horaFixa: '11:00', modalidade: 'Presencial', valorSessao: 250, desde: '2026-06-12', telefone: '(11) 90000-0006', excluido: false },
+  { id: 'p7', nome: 'Gabriela Lima', iniciais: 'GL', frequencia: 'Semanal', diaFixo: 5, horaFixa: '09:00', modalidade: 'Presencial', valorSessao: 200, desde: '2026-02-06', telefone: '(11) 90000-0007', excluido: false },
 ];
 
 const byId = Object.fromEntries(pacientesIniciais.map((p) => [p.id, p]));
@@ -35,6 +35,7 @@ function sessao(pacienteId: string, data: string, hora: string, status: StatusSe
     modalidade: p.modalidade,
     valor: p.valorSessao,
     duracaoMin: 50,
+    excluida: false,
   };
 }
 
@@ -94,6 +95,7 @@ export const lancamentosIniciais: Lancamento[] = sessoesIniciais
       valor: s.valor,
       pago: !aberto,
       metodo: aberto ? undefined : metodos[i % metodos.length],
+      excluido: false,
     };
   });
 
@@ -106,7 +108,14 @@ export const notasIniciais: Nota[] = pacientesIniciais.flatMap((p) => {
     'Retomamos o tema da rotina de trabalho. Combinado: registrar horários de sono ao longo da semana para conversarmos na próxima sessão.',
     'Sessão centrada nas relações familiares. Relatou avanços na comunicação com a irmã; seguir explorando limites pessoais.',
   ];
-  return ultimas.map((s, i) => ({ id: nextId('n'), pacienteId: p.id, sessaoId: s.id, data: s.data, texto: textos[i] }));
+  return ultimas.map((s, i) => ({
+    id: nextId('n'),
+    pacienteId: p.id,
+    sessaoId: s.id,
+    data: s.data,
+    texto: textos[i],
+    excluida: false,
+  }));
 });
 
 export function gerarId(prefix: string): string {

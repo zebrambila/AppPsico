@@ -12,7 +12,7 @@ const DIAS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 const normalizar = (t: string) => t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
 export default function Pacientes() {
-  const { pacientes, lancamentos, showToast } = useApp();
+  const { pacientes, lancamentos } = useApp();
   const [busca, setBusca] = useState('');
 
   const lista = useMemo(
@@ -29,7 +29,7 @@ export default function Pacientes() {
           </Txt>
           <Display>Pacientes</Display>
         </View>
-        <Button label="+ Novo" onPress={() => showToast('Cadastro de novo paciente — em breve')} />
+        <Button label="+ Novo" onPress={() => router.push('/paciente/novo')} />
       </Row>
 
       <View style={styles.search}>

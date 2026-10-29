@@ -1,4 +1,5 @@
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { SessionRow } from '@/components/SessionRow';
@@ -8,6 +9,7 @@ import {
   Card,
   Chip,
   Display,
+  EmptyState,
   IconBox,
   PressableCard,
   Row,
@@ -15,6 +17,9 @@ import {
   SectionTitle,
   Txt,
 } from '@/components/ui';
+import { ValorMascarado } from '@/components/ValorMascarado';
+import { useConectividade } from '@/hooks/useConectividade';
+import { useProximaSessao } from '@/hooks/useProximaSessao';
 import { fmtCabecalho, moeda, plural } from '@/lib/format';
 import { useApp } from '@/store/AppStore';
 import { iniciaisDe, useAuth } from '@/store/AuthStore';
@@ -22,21 +27,53 @@ import { sessoesDoDia, soma } from '@/store/selectors';
 import { colors, radius } from '@/theme';
 
 export default function Inicio() {
+  const conectado = useConectividade();
   const { hoje, sessoes, lancamentos, paciente, confirmarSessao, showToast } = useApp();
   const { usuario, sair } = useAuth();
   const primeiroNomeUsuario = usuario?.nome.split(' ')[0] ?? '';
 
   const deHoje = sessoesDoDia(sessoes, hoje);
   const realizadas = deHoje.filter((s) => s.status === 'realizada').length;
-  const proxima = deHoje.find((s) => s.status === 'confirmada' || s.status === 'pendente');
+  const proxima = useProximaSessao(deHoje);
   const proximoPac = proxima ? paciente(proxima.pacienteId) : undefined;
   const abertos = lancamentos.filter((l) => !l.pago);
   const aReceber = soma(abertos);
   const aConfirmar = deHoje.filter((s) => s.status === 'pendente');
 
+  const [valorReceberVisivel, setValorReceberVisivel] = useState(false);
+  const [valorProximaSessaoVisivel, setValorProximaSessaoVisivel] = useState(false);
+
+  // Valores financeiros sempre começam ocultos a cada vez que a tela ganha foco (FR-016).
+  useFocusEffect(
+    useCallback(() => {
+      setValorReceberVisivel(false);
+      setValorProximaSessaoVisivel(false);
+    }, []),
+  );
+
+  // Quando a sessão em destaque muda (ex.: a anterior passou do horário), o valor volta a ficar
+  // oculto; ajuste de estado durante a renderização, sem efeito, seguindo o padrão recomendado
+  // pelo React para resetar estado quando uma dependência muda.
+  const [sessaoAnteriorId, setSessaoAnteriorId] = useState(proxima?.id);
+  if (proxima?.id !== sessaoAnteriorId) {
+    setSessaoAnteriorId(proxima?.id);
+    setValorProximaSessaoVisivel(false);
+  }
+
   const abrirPaciente = (id: string) => router.push({ pathname: '/paciente/[id]', params: { id } });
   const registrar = (sessaoId: string, pacienteId: string) =>
     router.push({ pathname: '/sessao/registrar', params: { sessaoId, pacienteId } });
+
+  if (!conectado) {
+    return (
+      <Screen>
+        <EmptyState
+          title="Sem conexão com a internet"
+          subtitle="Verifique sua internet e tente novamente para ver o resumo do seu dia."
+        />
+      </Screen>
+    );
+  }
 
   return (
     <Screen>
@@ -79,9 +116,19 @@ export default function Inicio() {
             <Txt size={18} weight="semibold" color={colors.white}>
               {proximoPac.nome}
             </Txt>
-            <Txt size={13} color={colors.onPrimaryMuted}>
-              {proxima.duracaoMin} min · R$ {proxima.valor}
-            </Txt>
+            <Row style={{ gap: 4 }}>
+              <Txt size={13} color={colors.onPrimaryMuted}>
+                {proxima.duracaoMin} min ·
+              </Txt>
+              <ValorMascarado
+                valor={moeda(proxima.valor)}
+                visivel={valorProximaSessaoVisivel}
+                onToggle={() => setValorProximaSessaoVisivel((v) => !v)}
+                size={13}
+                weight="regular"
+                color={colors.onPrimaryMuted}
+              />
+            </Row>
           </View>
           <Row style={{ gap: 10 }}>
             <Button label="Abrir ficha" variant="light" style={{ flex: 1 }} onPress={() => abrirPaciente(proximoPac.id)} />
@@ -121,13 +168,19 @@ export default function Inicio() {
         </Card>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel={`${moeda(aReceber)} a receber`}
+          accessibilityLabel={
+            valorReceberVisivel ? `${moeda(aReceber)} a receber. Ir para financeiro` : 'Valor a receber oculto. Ir para financeiro'
+          }
           onPress={() => router.navigate({ pathname: '/financeiro', params: { filtro: 'pendentes' } })}
           style={{ flex: 1, padding: 14, gap: 4, borderRadius: radius.lg, backgroundColor: colors.warnBg }}
         >
-          <Txt size={20} weight="extrabold" color={colors.warnInk}>
-            {moeda(aReceber)}
-          </Txt>
+          <ValorMascarado
+            valor={moeda(aReceber)}
+            visivel={valorReceberVisivel}
+            onToggle={() => setValorReceberVisivel((v) => !v)}
+            size={20}
+            color={colors.warnInk}
+          />
           <Txt size={12} color={colors.warnInk}>
             a receber
           </Txt>
@@ -159,9 +212,22 @@ export default function Inicio() {
             <IconBox icon="dollar-sign" tone="warn" />
             <View style={{ flex: 1, gap: 2 }}>
               <Txt weight="semibold">{plural(abertos.length, 'pagamento em aberto', 'pagamentos em aberto')}</Txt>
-              <Txt size={12} color={colors.muted}>
-                Total de {moeda(aReceber)} · enviar lembrete
-              </Txt>
+              <Row style={{ gap: 4 }}>
+                <Txt size={12} color={colors.muted}>
+                  Total de
+                </Txt>
+                <ValorMascarado
+                  valor={moeda(aReceber)}
+                  visivel={valorReceberVisivel}
+                  onToggle={() => setValorReceberVisivel((v) => !v)}
+                  size={12}
+                  weight="regular"
+                  color={colors.muted}
+                />
+                <Txt size={12} color={colors.muted}>
+                  · enviar lembrete
+                </Txt>
+              </Row>
             </View>
           </PressableCard>
         ) : null}

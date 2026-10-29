@@ -18,6 +18,8 @@ export interface Paciente {
   /** "AAAA-MM-DD" */
   desde: string;
   telefone: string;
+  /** true quando o paciente foi excluído (exclusão lógica); nunca apagado de fato. */
+  excluido: boolean;
 }
 
 export interface Sessao {
@@ -31,6 +33,8 @@ export interface Sessao {
   modalidade: Modalidade;
   valor: number;
   duracaoMin: number;
+  /** true quando a sessão foi excluída (exclusão lógica); nunca apagada de fato. */
+  excluida: boolean;
 }
 
 export interface Lancamento {
@@ -43,6 +47,8 @@ export interface Lancamento {
   metodo?: MetodoPagamento;
   /** lembrete de cobrança enviado */
   cobrado?: boolean;
+  /** true quando o lançamento foi excluído (exclusão lógica); nunca apagado de fato. */
+  excluido: boolean;
 }
 
 export interface Nota {
@@ -51,4 +57,6 @@ export interface Nota {
   sessaoId?: string;
   data: string;
   texto: string;
+  /** true quando a nota foi excluída (direta ou em cascata); a nota é preservada, mas sai do prontuário normal. */
+  excluida: boolean;
 }

@@ -100,3 +100,12 @@ export function primeiroNome(nome: string): string {
 export function horaValida(hora: string): boolean {
   return /^([01]\d|2[0-3]):[0-5]\d$/.test(hora);
 }
+
+/** Aplica a máscara "(XX) xxxxx-xxxx" progressivamente, a partir dos dígitos informados. */
+export function fmtTelefone(valor: string): string {
+  const digitos = valor.replace(/\D/g, '').slice(0, 11);
+  if (digitos.length === 0) return '';
+  if (digitos.length <= 2) return `(${digitos}`;
+  if (digitos.length <= 7) return `(${digitos.slice(0, 2)}) ${digitos.slice(2)}`;
+  return `(${digitos.slice(0, 2)}) ${digitos.slice(2, 7)}-${digitos.slice(7)}`;
+}

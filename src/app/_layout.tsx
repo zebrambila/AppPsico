@@ -75,7 +75,9 @@ function RootNavigator() {
       </Stack.Protected>
       <Stack.Protected guard={logado}>
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="paciente/novo" />
         <Stack.Screen name="paciente/[id]" />
+        <Stack.Screen name="paciente/[id]/editar" />
         <Stack.Screen name="sessao/registrar" />
         <Stack.Screen
           name="sessao/nova"
