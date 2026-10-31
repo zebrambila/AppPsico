@@ -2,6 +2,9 @@ import Feather from '@expo/vector-icons/Feather';
 import { router } from 'expo-router';
 import type { ComponentProps, ReactNode } from 'react';
 import {
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -63,14 +66,18 @@ export function Screen({
 }) {
   return (
     <SafeAreaView style={styles.screen} edges={edges}>
-      <ScrollView
-        contentContainerStyle={[styles.screenContent, contentStyle]}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        {children}
-      </ScrollView>
-      {footer}
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <Pressable accessible={false} onPress={Keyboard.dismiss} style={[styles.screenContent, { flexGrow: 1 }, contentStyle]}>
+            {children}
+          </Pressable>
+        </ScrollView>
+        {footer}
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }

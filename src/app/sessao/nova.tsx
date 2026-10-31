@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
+import { Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, FieldLabel, Pill, Row, Txt } from '@/components/ui';
@@ -56,11 +56,16 @@ export default function NovaSessao() {
   };
 
   return (
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.bg }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
     <ScrollView
-      style={{ backgroundColor: colors.bg }}
-      contentContainerStyle={{ padding: 20, paddingBottom: insets.bottom + 24, gap: 16 }}
+      contentContainerStyle={{ flexGrow: 1 }}
       keyboardShouldPersistTaps="handled"
     >
+      <Pressable
+        accessible={false}
+        onPress={Keyboard.dismiss}
+        style={{ flexGrow: 1, padding: 20, paddingBottom: insets.bottom + 24, gap: 16 }}
+      >
       <Txt accessibilityRole="header" size={20} weight="bold">
         Nova sessão
       </Txt>
@@ -156,7 +161,9 @@ export default function NovaSessao() {
           onPress={agendar}
         />
       </Row>
+      </Pressable>
     </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 

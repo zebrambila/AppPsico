@@ -59,7 +59,7 @@ export function PacienteForm({
   };
 
   return (
-    <ScrollView contentContainerStyle={{ gap: 16 }} keyboardShouldPersistTaps="handled">
+    <View style={{ gap: 16 }}>
       <View style={{ gap: 6 }}>
         <FieldLabel>Nome completo</FieldLabel>
         <TextInput
@@ -154,7 +154,7 @@ export function PacienteForm({
       ) : null}
 
       <Button label={salvando ? 'Salvando…' : labelBotao} size="lg" onPress={salvar} style={{ opacity: salvando ? 0.7 : 1 }} />
-    </ScrollView>
+    </View>
   );
 }
 
