@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { BackButton, Button, Card, EmptyState, FieldLabel, Pill, Row, Screen, Txt } from '@/components/ui';
 import type { MetodoPagamento, Presenca } from '@/data/types';
 import { confirmarAcao } from '@/lib/confirmar';
-import { addDays, fmtDiaSemana, moeda } from '@/lib/format';
+import { fmtDiaSemana, moeda } from '@/lib/format';
 import { useApp } from '@/store/AppStore';
 import { colors, fonts, radius } from '@/theme';
 
@@ -49,6 +49,18 @@ export default function RegistrarSessao() {
   const hora = sessao?.hora ?? p.horaFixa;
   const valor = sessao?.valor ?? p.valorSessao;
   const cobra = presenca === 'compareceu';
+
+  const chave = (s: { data: string; hora: string }) => `${s.data} ${s.hora}`;
+  const proximaSessao = sessoes
+    .filter(
+      (s) =>
+        s.pacienteId === p.id &&
+        s.id !== sessao?.id &&
+        !s.excluida &&
+        (s.status === 'confirmada' || s.status === 'pendente') &&
+        chave(s) > chave({ data, hora }),
+    )
+    .sort((a, b) => chave(a).localeCompare(chave(b)))[0];
 
   const salvar = async () => {
     if (enviando) return;
@@ -128,6 +140,7 @@ export default function RegistrarSessao() {
             <Pill
               key={o.value}
               label={o.label}
+              size={12}
               selected={presenca === o.value}
               onPress={() => setPresenca(o.value)}
               style={{ flex: 1, borderRadius: radius.md, minHeight: 44 }}
@@ -204,19 +217,27 @@ export default function RegistrarSessao() {
         </Txt>
       </View>
 
-      <View style={styles.next}>
-        <View style={{ gap: 2 }}>
+      {proximaSessao ? (
+        <View style={styles.next}>
+          <View style={{ gap: 2 }}>
+            <Txt size={12} weight="semibold" color={colors.primaryInk}>
+              Próxima sessão
+            </Txt>
+            <Txt weight="bold">
+              {fmtDiaSemana(proximaSessao.data)} · {proximaSessao.hora}
+            </Txt>
+          </View>
           <Txt size={12} weight="semibold" color={colors.primaryInk}>
-            Próxima sessão
-          </Txt>
-          <Txt weight="bold">
-            {fmtDiaSemana(addDays(data, 7))} · {hora}
+            Recorrente
           </Txt>
         </View>
-        <Txt size={12} weight="semibold" color={colors.primaryInk}>
-          Recorrente
-        </Txt>
-      </View>
+      ) : (
+        <View style={styles.next}>
+          <Txt size={13} weight="semibold" color={colors.primaryInk}>
+            Não há próximas sessões agendadas
+          </Txt>
+        </View>
+      )}
 
       <Button label={enviando ? 'Salvando…' : 'Salvar registro'} size="lg" onPress={salvar} style={{ opacity: enviando ? 0.7 : 1 }} />
 

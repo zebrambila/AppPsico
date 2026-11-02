@@ -20,6 +20,7 @@ import {
 import { ValorMascarado } from '@/components/ValorMascarado';
 import { useConectividade } from '@/hooks/useConectividade';
 import { useProximaSessao } from '@/hooks/useProximaSessao';
+import { useSaudacao } from '@/hooks/useSaudacao';
 import { fmtCabecalho, moeda, plural } from '@/lib/format';
 import { useApp } from '@/store/AppStore';
 import { iniciaisDe, useAuth } from '@/store/AuthStore';
@@ -28,6 +29,7 @@ import { colors, radius } from '@/theme';
 
 export default function Inicio() {
   const conectado = useConectividade();
+  const saudacao = useSaudacao();
   const { hoje, sessoes, lancamentos, paciente, confirmarSessao, showToast } = useApp();
   const { usuario, sair } = useAuth();
   const primeiroNomeUsuario = usuario?.nome.split(' ')[0] ?? '';
@@ -82,7 +84,7 @@ export default function Inicio() {
           <Txt size={13} weight="medium" color={colors.muted}>
             {fmtCabecalho(hoje)}
           </Txt>
-          <Display>Bom dia, {primeiroNomeUsuario}</Display>
+          <Display>{saudacao}, {primeiroNomeUsuario}</Display>
         </View>
         <Pressable
           accessibilityRole="button"

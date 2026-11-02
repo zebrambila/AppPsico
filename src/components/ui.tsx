@@ -204,12 +204,14 @@ export function Pill({
   onPress,
   variant = 'primary',
   style,
+  size = 13,
 }: {
   label: string;
   selected: boolean;
   onPress: () => void;
   variant?: 'primary' | 'soft' | 'dark';
   style?: StyleProp<ViewStyle>;
+  size?: number;
 }) {
   const sel =
     variant === 'soft'
@@ -231,7 +233,7 @@ export function Pill({
         style,
       ]}
     >
-      <Txt size={13} weight="semibold" color={selected ? sel.fg : colors.inkSoft}>
+      <Txt size={size} weight="semibold" color={selected ? sel.fg : colors.inkSoft}>
         {label}
       </Txt>
     </Pressable>
